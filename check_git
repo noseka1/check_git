@@ -45,12 +45,12 @@ if [[ -z "$STATE_OK" ]]; then
 fi
 
 # Directory to use to create the repo
-REPO_DIR=$(mktemp -d $TMPDIR/$PROGNAME.XXXXXXXXXXXX)
-if [[ ! -d $REPO_DIR ]]; then
+REPO_PARENT_DIR=$(mktemp -d $TMPDIR/$PROGNAME.XXXXXXXXXXXX)
+if [[ ! -d $REPO_PARENT_DIR ]]; then
     echo "Could not create a temporary directory for the git repo; exiting"
     exit $STATE_UNKNOWN
 fi
-trap "rm -Rf $REPO_DIR" EXIT
+trap "rm -Rf $REPO_PARENT_DIR" EXIT
 
 print_usage() {
     echo "Usage: $PROGNAME repo_url [ --keyfile /path/to/id_file ] [ --push ]"
@@ -92,9 +92,9 @@ while test -n "$1"; do
             keyfile=$2
             shift
 
-            echo "ssh -T -o StrictHostKeyChecking=no -i $keyfile \$*" > $REPO_DIR/.git-ssh
-            chmod 0700 $REPO_DIR/.git-ssh
-            export GIT_SSH=$REPO_DIR/.git-ssh
+            echo "ssh -T -o StrictHostKeyChecking=no -i $keyfile \$*" > $REPO_PARENT_DIR/.git-ssh
+            chmod 0700 $REPO_PARENT_DIR/.git-ssh
+            export GIT_SSH=$REPO_PARENT_DIR/.git-ssh
             ;;
         --push)
             push=1
@@ -114,6 +114,8 @@ while test -n "$1"; do
     esac
     shift
 done
+
+REPO_DIR=$REPO_PARENT_DIR/repo
 
 start_time=$(date +%s)
 # Use git ls-remote if not testing push
